@@ -1,0 +1,97 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ENVIRONMENT: ""
+      LOWERCASE_REPO: ""
+      
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Get name for ECR repo #(used in image name)
+      run: echo "LOWERCASE_REPO=$(echo ${{ github.event.repository.name }} | tr [A-Z] [a-z])" >> $GITHUB_ENV
+    - name: if DEV, set dev variables
+      id: set-dev-variables  
+      shell: bash
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "ENVIRONMENT=dev" >> $GITHUB_ENV;
+    - name: if QA, set qa variables
+      id: set-qa-variables
+      shell: bash
+      if: github.event_name == 'push' && github.ref_type != 'tag'
+      run: |
+        echo "ENVIRONMENT=qa" >> $GITHUB_ENV; 
+    - name: if PROD, set prod variables
+      id: set-prod-variables
+      shell: bash
+      if: github.ref_type == 'tag'
+      run: |
+        echo "ENVIRONMENT=prod" >> $GITHUB_ENV;
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+#    - name: Test with pytest
+#      run: |
+#        pytest
+  
+    - name: Generate Docker Metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      env:
+        DOCKER_METADATA_PR_HEAD_SHA: true
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ${{ secrets.LIGHT_DOCKER_REPOSITORY_URL }}/${{ env.LOWERCASE_REPO }}    
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=sha,prefix=sha-
+          type=sha,prefix=sha-,format=short
+          type=sha,prefix=${{ env.ENVIRONMENT }}-sha-,format=short
+          type=ref,event=pr
+          type=ref,event=branch
+          type=ref,event=tag
+            
+    - name: Login to LIGHT AWS ECR
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.LIGHT_DOCKER_USER }}
+        password: ${{ secrets.LIGHT_DOCKER_TOKEN }}
+        registry: ${{ secrets.LIGHT_DOCKER_REPOSITORY_URL }}
+        ecr: false # TODO: fix as this is misleading, set to false to enable use of LIGHT_DOCKER_TOKEN to auth with registry
+
+    - name: Build and push docker images
+      uses: docker/build-push-action@v4
+      with:
+        tags: ${{ steps.meta.outputs.tags }}
+        push: true
+        provenance: false
