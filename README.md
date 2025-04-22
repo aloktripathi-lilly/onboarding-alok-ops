@@ -22,7 +22,11 @@ Dockerfile
 README.md
 app.py
 
-**Step 2: Check App Status**  
+**Step 3: create PR** 
+
+  create new Branch  ( WIP) 
+
+**Step 3: Check App Status**  
  
 Once the app is ready, check the URL my-app.apps-d.lrl.lilly.com
 ( work in progress and readme will update based on the outcome)
