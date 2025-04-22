@@ -15,7 +15,7 @@ By following these steps, you'll complete the initial onboarding process for you
 
 Follow this directory stracture 
 
-.github/
+ .github/
 └── workflows/
     └── python-app.yml
 Dockerfile
