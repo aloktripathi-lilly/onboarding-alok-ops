@@ -5,7 +5,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello from FastAPI running in Kubernetes!"}
+    return {"message": "Hello from Alok & FastAPI running in Kubernetes!"}
 
 @app.get("/health")
 async def health_check():
