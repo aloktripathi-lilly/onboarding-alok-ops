@@ -14,6 +14,6 @@ async def health_check():
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=3000)
 
-print("Hello World")
+print("Hello World From Alok Onboarding process ")
 print("Run")
 print("Friend")
