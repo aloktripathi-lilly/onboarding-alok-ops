@@ -13,6 +13,14 @@ By following these steps, you'll complete the initial onboarding process for you
 5. Create your first application.
 6. Commit the changes and push the application to the repository.
 
+Follow this directory stracture 
+
+.github/
+└── workflows/
+    └── python-app.yml
+Dockerfile
+README.md
+app.py
 
 **Step 2: Check App Status  ( work in progress and readme will update based on the outcome) **
 Once the app is ready, check the URL my-app.apps-d.lrl.lilly.com
